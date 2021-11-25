@@ -511,48 +511,7 @@ class NeuralNetwork {
   }
 }
 
-export function Brain (el = '') {
-  // Main ------------------------------------------------------------------
-
-  if (!Detector.webgl) {
-    Detector.addGetWebGLMessage()
-    document.getElementById('loading').style.display = 'none' // hide loading animation when finish loading model
-  }
-
-  //   let container, stats
-  //   let camera, cameraCtrl, renderer
-
-  // ---- scene
-  const container = document.getElementById('canvas-container')
-  const scene = window.scene = new THREE.Scene()
-
-  // ---- camera
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000)
-  // camera orbit control
-  const cameraCtrl = new THREE.OrbitControls(camera, container)
-  cameraCtrl.object.position.y = 150
-  cameraCtrl.update()
-
-  // ---- renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
-  renderer.setSize(window.innerWidth, window.innerHeight)
-  container.appendChild(renderer.domElement)
-
-  // ---- stats
-  const stats = new Stats()
-  container.appendChild(stats.domElement)
-
-  // ---- scene settings
-  const scene_settings = {
-    pause: false,
-    bgColor: 0x0d0d0f
-  }
-
-  // Neural Net
-  const neuralNet = window.neuralNet = new NeuralNetwork()
-  // TODO
-  //   scene.add(neuralNet.create())
-
+function createGUI () {
   // ---------- GUI ----------
 
   const gui = new dat.GUI()
@@ -595,18 +554,61 @@ export function Brain (el = '') {
   }
 
   // ---------- end GUI ----------
+}
 
-  (function run () {
+export function Brain (el = '') {
+  // Main ------------------------------------------------------------------
+
+  if (!Detector.webgl) {
+    Detector.addGetWebGLMessage()
+    document.getElementById('loading').style.display = 'none' // hide loading animation when finish loading model
+  }
+
+  //   let container, stats
+  //   let camera, cameraCtrl, renderer
+
+  // ---- scene
+  const container = document.getElementById('canvas-container')
+  const scene = window.scene = new THREE.Scene()
+
+  // ---- camera
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000)
+  // camera orbit control
+  const cameraCtrl = new THREE.OrbitControls(camera, container)
+  cameraCtrl.object.position.y = 150
+  cameraCtrl.update()
+
+  // ---- renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  container.appendChild(renderer.domElement)
+
+  // ---- stats
+  // const stats = new Stats()
+  // container.appendChild(stats.domElement)
+
+  // ---- scene settings
+  const scene_settings = {
+    pause: false,
+    bgColor: 0x0d0d0f
+  }
+
+  // Neural Net
+  const neuralNet = window.neuralNet = new NeuralNetwork()
+    // TODO
+    //   scene.add(neuralNet.create())
+
+    ;(function run () {
     requestAnimationFrame(run)
     renderer.setClearColor(scene_settings.bgColor, 1)
 
     if (!scene_settings.pause) {
       neuralNet.update()
-      updateGuiInfo()
+      // updateGuiInfo()
     }
 
     renderer.render(scene, camera)
-    stats.update()
+    // stats.update()
   })()
 
   window.addEventListener('keypress', function (event) {
