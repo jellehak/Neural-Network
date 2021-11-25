@@ -1,5 +1,5 @@
 
-export function createGUI (neuralNet) {
+export default function ({ neuralNet }) {
   // ---------- GUI ----------
 
   const gui = new dat.GUI()
@@ -10,6 +10,7 @@ export function createGUI (neuralNet) {
   guiInfo.add(neuralNet, 'numAxons').name('Axons')
   guiInfo.add(neuralNet, 'numSignals', 0, neuralNet.limitSignals).name('Signals')
   guiInfo.autoListen = false
+  guiInfo.open()
 
   const guiSettings = gui.addFolder('Settings')
   guiSettings.add(neuralNet, 'currentMaxSignals', 0, neuralNet.limitSignals).name('Max Signals')
@@ -22,9 +23,8 @@ export function createGUI (neuralNet) {
   guiSettings.addColor(neuralNet.particlePool, 'pColor').name('Signal Color')
   guiSettings.addColor(neuralNet, 'neuronColor').name('Neuron Color')
   guiSettings.addColor(neuralNet, 'axonColor').name('Axon Color')
-  guiSettings.addColor(sceneSettings, 'bgColor').name('Background')
+  // guiSettings.addColor(sceneSettings, 'bgColor').name('Background')
 
-  guiInfo.open()
   guiSettings.open()
 
   function updateNeuralNetworkSettings () {
@@ -35,11 +35,20 @@ export function createGUI (neuralNet) {
     guiSettings.__controllers[i].onChange(updateNeuralNetworkSettings)
   }
 
-  function updateGuiInfo () {
-    for (const i in guiInfo.__controllers) {
-      guiInfo.__controllers[i].updateDisplay()
-    }
-  }
+  // function updateGuiInfo () {
+  //   for (const i in guiInfo.__controllers) {
+  //     guiInfo.__controllers[i].updateDisplay()
+  //   }
+  // }
 
   // ---------- end GUI ----------
+
+  return {
+    gui,
+    update () {
+      guiInfo.__controllers.forEach(c => {
+        c.updateDisplay()
+      })
+    }
+  }
 }

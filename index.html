@@ -25,6 +25,7 @@
 		<div style="width:50%">
 			<h1>Network</h1>
 			<button onclick="trigger()">Trigger</button>
+			<button onclick="clearSignals()">clearSignals</button>
 
 			<!-- Input Nodes
 			<input type="range" min="0" max="1" step="0.01">
@@ -61,7 +62,7 @@
 
 
 	<script src="js/vendor/Detector.js"></script>
-	<!-- <script src="js/vendor/dat.gui.min.js"></script> -->
+	<script src="js/vendor/dat.gui.min.js"></script>
 	<!-- <script src="js/vendor/stats.min.js"></script> -->
 	<!-- <script src="js/vendor/three.min.js"></script> -->
 	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script> -->
@@ -70,7 +71,8 @@
 	<script src="js/vendor/OBJLoader.js"></script>
 
 	<script type="module">
-		import { Brain, NeuralNetwork } from "./js/Brain.js"
+		import { Brain, NeuralNetwork } from "./js/brain.js"
+		import Gui from "./plugins/gui.js"
 
 		// Get neuron locations
 		const brain = await fetch('models/brain_vertex_low.obj').then(e => e.text())
@@ -104,22 +106,45 @@
 		})
 		//.$mount(document.getElementById('canvas-container'))
 
+
 		const network = new NeuralNetwork()
 		const mesh = network.create(brain)
 		scene.add(mesh)
 		
-// console.log(network.allNeurons)
+		// Add Plugin
+		const gui = Gui({neuralNet: network})
+
 		setInterval(()=> {
-			// network.update()
+			network.update()
+			gui.update()
 		}, 20)
 
+		const { allNeurons } = network
+		
 		// Trigger Neuron
 		window.trigger = () => {
-			network.releaseSignalAt(network.allNeurons[0])
+			console.log("Trigger some neurons")
+			network.releaseSignalAt(allNeurons[0])
+
+			const index = THREE.Math.randInt(0, allNeurons.length)
+			console.log(`Trigger neuron ${index}`)
+			network.releaseSignalAt(allNeurons[index])
+		}
+
+		window.clearSignals = () => {
+			network.allSignals.forEach(s => {
+				s.particle.free()
+				s.alive = false
+			})
+			allNeurons.forEach(n => {
+				// console.log(n)
+				n.reset()
+				network.allSignals = []
+			})
 		}
 		
 		// Done loading
-		console.log('Neural Network initialized')
+		console.log('Neural Network initialized', allNeurons.length)
 		document.getElementById('loading').style.display = 'none' // hide loading animation when finish loading model
 	</script>
 

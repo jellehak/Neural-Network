@@ -2,7 +2,7 @@ const { THREE } = window
 
 // Neuron ----------------------------------------------------------------
 
-class Neuron extends THREE.Vector3 {
+export class Neuron extends THREE.Vector3 {
   constructor (x, y, z) {
     super(x, y, z)
 
@@ -13,7 +13,6 @@ class Neuron extends THREE.Vector3 {
     this.fired = false
     this.firedCount = 0
     this.prevReleaseAxon = null
-    // THREE.Vector3.call(this, x, y, z)
   }
 
   connectNeuronTo (neuronB) {
@@ -23,6 +22,13 @@ class Neuron extends THREE.Vector3 {
     neuronA.connection.push(new Connection(axon, 'A'))
     neuronB.connection.push(new Connection(axon, 'B'))
     return axon
+  }
+
+  reset () {
+    this.releaseDelay = 0
+    this.fired = false
+    this.recievedSignal = false
+    this.firedCount = 0
   }
 
   createSignal (particlePool, minSpeed, maxSpeed) {
@@ -41,8 +47,6 @@ class Neuron extends THREE.Vector3 {
     return signals
   }
 }
-
-// Neuron.prototype = Object.create(THREE.Vector3.prototype)
 
 // Signal ----------------------------------------------------------------
 
@@ -91,8 +95,6 @@ class Signal extends THREE.Vector3 {
     this.particle.set(pos.x, pos.y, pos.z)
   }
 }
-
-// Signal.prototype = Object.create(THREE.Vector3.prototype)
 
 // Particle Pool ---------------------------------------------------------
 
@@ -189,8 +191,6 @@ class Particle extends THREE.Vector3 {
   }
 }
 
-// Particle.prototype = Object.create(THREE.Vector3.prototype)
-
 // Axon ------------------------------------------------------------------
 
 class Axon extends THREE.CubicBezierCurve3 {
@@ -233,8 +233,6 @@ class Axon extends THREE.CubicBezierCurve3 {
   }
 }
 
-// Axon.prototype = Object.create(THREE.CubicBezierCurve3.prototype)
-
 // Connection ------------------------------------------------------------
 class Connection {
   constructor (axon, startingPoint) {
@@ -247,8 +245,6 @@ class Connection {
 
 export class NeuralNetwork {
   constructor (config = {}) {
-    this.initialized = false
-
     // settings
     this.verticesSkipStep = 2
     this.maxAxonDist = 8
@@ -327,10 +323,10 @@ export class NeuralNetwork {
     })
     // scene.add(loadedObject)
 
-    this.initNeurons(meshVertices)
-    const axonMesh = this.initAxons()
+    const neurons = this.initNeurons(meshVertices)
+    scene.add(neurons)
 
-    this.initialized = true
+    const axonMesh = this.initAxons()
 
     scene.add(axonMesh)
 
@@ -375,7 +371,7 @@ export class NeuralNetwork {
 
     // neuron mesh
     this.neuronParticles = new THREE.Points(this.neuronsGeom, this.neuronMaterial)
-    scene.add(this.neuronParticles)
+    return this.neuronParticles
   }
 
   initAxons () {
@@ -385,9 +381,10 @@ export class NeuralNetwork {
       for (let k = j + 1; k < allNeuronsLength; k++) {
         const n2 = this.allNeurons[k]
         // connect neuron if distance ... and limit connection per neuron to not more than x
-        if (n1 !== n2 && n1.distanceTo(n2) < this.maxAxonDist &&
-					n1.connection.length < this.maxConnectionPerNeuron &&
-					n2.connection.length < this.maxConnectionPerNeuron) {
+        const shouldConnect = (n1 !== n2 && n1.distanceTo(n2) < this.maxAxonDist &&
+          n1.connection.length < this.maxConnectionPerNeuron &&
+          n2.connection.length < this.maxConnectionPerNeuron)
+        if (shouldConnect) {
           const connectedAxon = n1.connectNeuronTo(n2)
           this.constructAxonArrayBuffer(connectedAxon)
         }
@@ -400,15 +397,14 @@ export class NeuralNetwork {
     const axonOpacities = new window.Float32Array(this.shaderAttributes.opacityAttr.value.length)
 
     // transfer temp-array to arrayBuffer
-    transferToArrayBuffer(this.axonIndices, axonIndices)
-    transferToArrayBuffer(this.axonPositions, axonPositions)
-    transferToArrayBuffer(this.shaderAttributes.opacityAttr.value, axonOpacities)
-
-    function transferToArrayBuffer (fromArr, toArr) {
+    function transferToArrayBuffer (fromArr = [], toArr = []) {
       for (let i = 0; i < toArr.length; i++) {
         toArr[i] = fromArr[i]
       }
     }
+    transferToArrayBuffer(this.axonIndices, axonIndices)
+    transferToArrayBuffer(this.axonPositions, axonPositions)
+    transferToArrayBuffer(this.shaderAttributes.opacityAttr.value, axonOpacities)
 
     const axonGeom = new THREE.BufferGeometry()
     // axonGeom.addAttribute('index', new THREE.BufferAttribute(axonIndices, 1))
@@ -433,11 +429,31 @@ export class NeuralNetwork {
     return axonMesh
   }
 
+  demoStep () {
+    this.update()
+
+    // reset all neurons and when there is X signal
+    if (this.allSignals.length <= 0) {
+      this.spark()
+    }
+  }
+
+  spark () {
+    const { allNeurons } = this
+
+    allNeurons.forEach(n => {
+      n.reset()
+    })
+    this.releaseSignalAt(allNeurons[THREE.Math.randInt(0, allNeurons.length)])
+  }
+
   update () {
     const currentTime = Date.now()
 
+    const { allNeurons } = this
+
     // update neurons state and release signal
-    this.allNeurons.forEach(n => {
+    allNeurons.forEach(n => {
       if (this.allSignals.length < this.currentMaxSignals - this.maxConnectionPerNeuron) {
         // currentMaxSignals - maxConnectionPerNeuron because allSignals can not bigger than particlePool size
         if (n.recievedSignal && n.firedCount < 8) { // Traversal mode
@@ -453,18 +469,6 @@ export class NeuralNetwork {
       n.recievedSignal = false // if neuron recieved signal but still in delay reset it
     })
 
-    // reset all neurons and when there is X signal
-    if (this.allSignals.length <= 0) {
-      // console.log('Spark')
-      this.allNeurons.forEach(n => {
-        n.releaseDelay = 0
-        n.fired = false
-        n.recievedSignal = false
-        n.firedCount = 0
-      })
-      this.releaseSignalAt(this.allNeurons[THREE.Math.randInt(0, this.allNeurons.length)])
-    }
-
     // update and remove signals
     this.allSignals.forEach((s, index) => {
       s.travel()
@@ -479,7 +483,7 @@ export class NeuralNetwork {
     // update particle pool vertices
     this.particlePool.update()
 
-    // update info for GUI
+    // Update stats
     this.updateInfo()
   }
 
@@ -510,11 +514,13 @@ export class NeuralNetwork {
     if (!neuron) {
       throw new Error('Neuron is required')
     }
+
     const signals = neuron.createSignal(this.particlePool, this.signalMinSpeed, this.signalMaxSpeed)
-    for (let ii = 0; ii < signals.length; ii++) {
-      const s = signals[ii]
+    // console.log(signals)
+    signals.forEach(s => {
       this.allSignals.push(s)
-    }
+    })
+    return signals
   }
 
   updateInfo () {
