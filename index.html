@@ -1,10 +1,12 @@
 <!doctype html>
 <html lang="en">
+
 <head>
 	<meta charset="utf-8">
 	<title>Neural Network</title>
-	<link rel="stylesheet" href="css/app.css"/>
+	<link rel="stylesheet" href="css/app.css" />
 </head>
+
 <body>
 
 	<div id="loading">
@@ -22,7 +24,12 @@
 	<div style="display:flex">
 		<div style="width:50%">
 			<h1>Network</h1>
-			<canvas id="canvas"></canvas>
+			<button onclick="trigger()">Trigger</button>
+
+			<!-- Input Nodes
+			<input type="range" min="0" max="1" step="0.01">
+			<input type="range" min="0" max="1" step="0.01"> -->
+			<!-- <canvas id="canvas"></canvas> -->
 		</div>
 
 		<div style="width:50%">
@@ -54,36 +61,68 @@
 
 
 	<script src="js/vendor/Detector.js"></script>
-	<script src="js/vendor/dat.gui.min.js"></script>
-	<script src="js/vendor/stats.min.js"></script>
-	<script src="js/vendor/three.min.js"></script>
+	<!-- <script src="js/vendor/dat.gui.min.js"></script> -->
+	<!-- <script src="js/vendor/stats.min.js"></script> -->
+	<!-- <script src="js/vendor/three.min.js"></script> -->
+	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/104/three.min.js"></script> -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r108/three.min.js"></script>
 	<script src="js/vendor/OrbitControls.js"></script>
 	<script src="js/vendor/OBJLoader.js"></script>
 
 	<script type="module">
-		import {Brain, NeuralNetwork} from "./js/Brain.js"
+		import { Brain, NeuralNetwork } from "./js/Brain.js"
 
-		const brain = `g brain
-v -46.50 -26.64 38.19
-v 44.69 12.42 -13.58
-v -6.30 34.15 -21.55
-v -6.91 56.36 35.68
-v 9.17 -30.52 -10.66
-v -47.59 3.97 44.13
-v -3.73 21.26 39.21
-v 29.36 34.18 68.31
-v 50.55 -6.18 -32.19
-v 19.85 35.46 -32.41
-v 54.98 -40.36 -14.20
-v -30.83 -4.27 -40.22
-v 54.44 23.94 11.34
-v -4.70 2.62 -23.90`
+		// Get neuron locations
+		const brain = await fetch('models/brain_vertex_low.obj').then(e => e.text())
+		// const brain = await fetch('models/brain_vertex_lowest.obj').then(e => e.text())
+// 		const brain = `g brain
+// v -46.50 -26.64 38.19
+// v 44.69 12.42 -13.58
+// v -6.30 34.15 -21.55
+// v -6.91 56.36 35.68
+// v 9.17 -30.52 -10.66
+// v -47.59 3.97 44.13
+// v -3.73 21.26 39.21
+// v 29.36 34.18 68.31
+// v 50.55 -6.18 -32.19
+// v 19.85 35.46 -32.41
+// v 54.98 -40.36 -14.20
+// v -30.83 -4.27 -40.22
+// v 54.44 23.94 11.34
+// v -4.70 2.62 -23.90
+// v 30.76 -24.93 -59.90
+// v 63.01 -14.90 21.50
+// v 10.69 12.63 60.69
+// v -58.13 12.36 -19.69
+// v 8.44 -34.61 -9.17
+// v -2.61 -38.34 -57.25
+// v -48.69 18.86 61.86
+// v -44.77 -34.05 37.60`
 
-		new Brain({
-			el: document.getElementById('canvas-container2')
+		const {scene} = new Brain({
+			el: document.getElementById('canvas-container')
 		})
 		//.$mount(document.getElementById('canvas-container'))
+
+		const network = new NeuralNetwork()
+		const mesh = network.create(brain)
+		scene.add(mesh)
+		
+// console.log(network.allNeurons)
+		setInterval(()=> {
+			// network.update()
+		}, 20)
+
+		// Trigger Neuron
+		window.trigger = () => {
+			network.releaseSignalAt(network.allNeurons[0])
+		}
+		
+		// Done loading
+		console.log('Neural Network initialized')
+		document.getElementById('loading').style.display = 'none' // hide loading animation when finish loading model
 	</script>
 
 </body>
+
 </html>
