@@ -20,15 +20,8 @@
 	<!-- <div id="about"><a target="_blank" href="https://github.com/nxxcxx/Neural-Network">github</a></div> -->
 
 	<div style="display:flex">
-		<div style="width:50%">
-			<h1>Network</h1>
-			<canvas id="canvas"></canvas>
-		</div>
-
-		<div style="width:50%">
-			<h1>Network</h1>
-			<div id="canvas-container"></div>
-		</div>
+		<h1>Network</h1>
+		<div id="canvas-container"></div>
 	</div>
 
 	<script type="x-shader/x-vertex" id="vertexshader-axon">
@@ -61,27 +54,9 @@
 	<script src="js/vendor/OBJLoader.js"></script>
 
 	<script type="module">
-		import {Brain, NeuralNetwork} from "./js/Brain.js"
+		import {Brain} from "./js/three-app.js"
 
-		const brain = `g brain
-v -46.50 -26.64 38.19
-v 44.69 12.42 -13.58
-v -6.30 34.15 -21.55
-v -6.91 56.36 35.68
-v 9.17 -30.52 -10.66
-v -47.59 3.97 44.13
-v -3.73 21.26 39.21
-v 29.36 34.18 68.31
-v 50.55 -6.18 -32.19
-v 19.85 35.46 -32.41
-v 54.98 -40.36 -14.20
-v -30.83 -4.27 -40.22
-v 54.44 23.94 11.34
-v -4.70 2.62 -23.90`
-
-		new Brain({
-			el: document.getElementById('canvas-container2')
-		})
+		new Brain()
 		//.$mount(document.getElementById('canvas-container'))
 	</script>
 
